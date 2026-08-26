@@ -52,6 +52,7 @@ def main() -> int:
         "runtimeRestoreSlot",
         "runtimeRtpFiles",
         "runtimeEngineMode",
+        "typeof event.error?.message",
     )
     if any(marker not in javascript for marker in required_markers):
         raise SystemExit("RPG_RUNTIME_RELEASE_BRIDGE_INVALID")

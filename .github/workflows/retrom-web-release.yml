@@ -1,0 +1,73 @@
+name: Retrom Web Runtime Release
+
+on:
+  push:
+    tags:
+      - "retrom-web-0.8.1.1-r*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: retrom-web-release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release identity
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^retrom-web-0\.8\.1\.1-r[1-9][0-9]*$ ]]
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+
+      - name: Build WebAssembly assets
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/retrom-runtime-output"
+          work="$RUNNER_TEMP/retrom-runtime-work"
+          mkdir -p "$output" "$work"
+          docker run --rm \
+            --platform linux/amd64 \
+            --hostname retrom-easyrpg-release \
+            -v "$GITHUB_WORKSPACE:/source:ro" \
+            -v "$GITHUB_WORKSPACE/.github/retrom-runtime:/recipe:ro" \
+            -v "$work:/work" \
+            -v "$output:/output" \
+            emscripten/emsdk@sha256:af45409f3199d88db4b1b03af0098532c8fb33a375ac257463eeb0a622870d06 \
+            /recipe/build-easyrpg.sh
+
+      - name: Validate and describe assets
+        run: |
+          set -euo pipefail
+          python3 .github/retrom-runtime/verify-release.py \
+            --output "$RUNNER_TEMP/retrom-runtime-output" \
+            --repository "https://github.com/$GITHUB_REPOSITORY" \
+            --tag "$GITHUB_REF_NAME" \
+            --commit "$GITHUB_SHA"
+
+      - name: Create immutable-tag release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --target "$GITHUB_SHA" \
+            --title "Retrom EasyRPG Web $GITHUB_REF_NAME" \
+            --generate-notes \
+            "$RUNNER_TEMP/retrom-runtime-output/easyrpg-player.js" \
+            "$RUNNER_TEMP/retrom-runtime-output/easyrpg-player.wasm" \
+            "$RUNNER_TEMP/retrom-runtime-output/retrom-runtime-release.json"

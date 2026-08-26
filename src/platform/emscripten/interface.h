@@ -30,6 +30,10 @@ public:
 	static void TakeScreenshot(bool is_auto_screenshot = false);
 	static void Reset();
 	static bool ResetCanvas();
+	static bool CanCreateRetromCheckpoint();
+	static bool CreateRetromCheckpoint();
+	static bool RestoreRetromCheckpoint();
+	static std::string RetromState();
 };
 
 class Emscripten_Interface_Private {

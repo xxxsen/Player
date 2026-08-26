@@ -27,9 +27,21 @@
 #include "baseui.h"
 #include "filefinder.h"
 #include "filesystem_stream.h"
+#include "game_interpreter.h"
+#include "game_map.h"
+#include "game_message.h"
+#include "game_player.h"
+#include "game_system.h"
+#include "game_variables.h"
+#include "main_data.h"
 #include "player.h"
+#include "scene.h"
 #include "scene_save.h"
 #include "output.h"
+
+namespace {
+constexpr int kRetromCheckpointSlot = 100;
+}
 
 void Emscripten_Interface::Reset() {
 	Player::reset_flag = true;
@@ -86,6 +98,51 @@ void Emscripten_Interface::TakeScreenshot(bool is_auto_screenshot) {
 	EM_ASM_ARGS({
 		Module.api_private.download_js($0, $1, $2);
 	}, screenshot.data(), screenshot.size(), filename.c_str());
+}
+
+bool Emscripten_Interface::CanCreateRetromCheckpoint() {
+	return Scene::instance && Scene::instance->type == Scene::Map &&
+		Main_Data::game_player && Main_Data::game_system && Main_Data::game_variables &&
+		Main_Data::game_system->GetAllowSave() && !Game_Message::IsMessageActive() &&
+		!Game_Map::GetInterpreter().IsRunning();
+}
+
+bool Emscripten_Interface::CreateRetromCheckpoint() {
+	if (!CanCreateRetromCheckpoint()) {
+		return false;
+	}
+	return Scene_Save::Save(FileFinder::Save(), kRetromCheckpointSlot);
+}
+
+bool Emscripten_Interface::RestoreRetromCheckpoint() {
+	auto fs = FileFinder::Save();
+	auto name = Scene_Save::GetSaveFilename(fs, kRetromCheckpointSlot);
+	name = fs.FindFile(name);
+	if (name.empty() || !Scene::instance) {
+		return false;
+	}
+	Player::LoadSavegame(name, kRetromCheckpointSlot);
+	return true;
+}
+
+std::string Emscripten_Interface::RetromState() {
+	const bool ready = Scene::instance && Scene::instance->type == Scene::Map &&
+		Main_Data::game_player && Main_Data::game_variables;
+	const char* engine = Player::IsRPG2k3() ? "RPG2003" : "RPG2000";
+	const int map_id = ready ? Main_Data::game_player->GetMapId() : 0;
+	const int x = ready ? Main_Data::game_player->GetX() : 0;
+	const int y = ready ? Main_Data::game_player->GetY() : 0;
+	const int fixture_state = ready ? Main_Data::game_variables->Get(1) : 0;
+	std::ostringstream json;
+	json << "{\"engine\":\"" << engine
+			 << "\",\"ready\":" << (ready ? "true" : "false")
+			 << ",\"canCheckpoint\":" << (CanCreateRetromCheckpoint() ? "true" : "false")
+			 << ",\"frameCount\":" << Player::GetFrames()
+			 << ",\"mapId\":" << map_id
+			 << ",\"playerX\":" << x
+			 << ",\"playerY\":" << y
+			 << ",\"fixtureState\":" << fixture_state << "}";
+	return json.str();
 }
 
 bool Emscripten_Interface_Private::UploadSavegameStep2(int slot, int buffer_addr, int size) {
@@ -186,6 +243,10 @@ EMSCRIPTEN_BINDINGS(player_interface) {
 		.class_function("refreshScene", &Emscripten_Interface::RefreshScene)
 		.class_function("takeScreenshot", &Emscripten_Interface::TakeScreenshot)
 		.class_function("resetCanvas", &Emscripten_Interface::ResetCanvas)
+		.class_function("canCreateRetromCheckpoint", &Emscripten_Interface::CanCreateRetromCheckpoint)
+		.class_function("createRetromCheckpoint", &Emscripten_Interface::CreateRetromCheckpoint)
+		.class_function("restoreRetromCheckpoint", &Emscripten_Interface::RestoreRetromCheckpoint)
+		.class_function("retromState", &Emscripten_Interface::RetromState)
 	;
 
 	emscripten::class_<Emscripten_Interface_Private>("api_private")

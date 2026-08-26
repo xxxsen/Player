@@ -39,8 +39,11 @@ def main() -> int:
         raise SystemExit("RETROM_RELEASE_JS_INVALID")
     if wasm_path.is_symlink() or not wasm_path.is_file() or wasm_path.stat().st_size < 8_000_000:
         raise SystemExit("RETROM_RELEASE_WASM_INVALID")
-    if wasm_path.read_bytes()[:8] != b"\x00asm\x01\x00\x00\x00":
+    wasm = wasm_path.read_bytes()
+    if wasm[:8] != b"\x00asm\x01\x00\x00\x00":
         raise SystemExit("RETROM_RELEASE_WASM_INVALID")
+    if b"/runtime/rpg-project/" not in wasm:
+        raise SystemExit("RETROM_RELEASE_GAME_URL_INVALID")
 
     javascript = js_path.read_text(encoding="utf-8")
     required_markers = (
@@ -80,4 +83,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

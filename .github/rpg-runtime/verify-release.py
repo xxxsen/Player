@@ -66,7 +66,7 @@ def main() -> int:
             }
         )
     metadata = {
-        "adapterAbi": "easyrpg-save-v1",
+        "adapterAbi": "easyrpg-save",
         "assets": assets,
         "commit": args.commit,
         "digestPolicy": "OBSERVED_CACHE_INTEGRITY_ONLY",

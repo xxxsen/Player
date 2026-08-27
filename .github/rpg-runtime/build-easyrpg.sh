@@ -43,7 +43,6 @@ emcmake cmake -S "$PLAYER_SOURCE" -B "$PLAYER_BUILD" -G Ninja \
   -DSDL2_DIR="$PREFIX/lib/cmake/SDL2" \
   -DPLAYER_FIND_ROOT_PATH_APPEND=ON \
   -DPLAYER_ENABLE_TESTS=OFF \
-  -DPLAYER_JS_GAME_URL=/runtime/rpg-project/ \
   -DPLAYER_JS_BUILD_SHELL=OFF
 cmake --build "$PLAYER_BUILD" --parallel 1
 

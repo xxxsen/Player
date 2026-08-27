@@ -42,7 +42,7 @@ def main() -> int:
     wasm = wasm_path.read_bytes()
     if wasm[:8] != b"\x00asm\x01\x00\x00\x00":
         raise SystemExit("RPG_RUNTIME_RELEASE_WASM_INVALID")
-    if b"/runtime/rpg-project/" not in wasm:
+    if b"runtimeProjectRootUrl" not in wasm or b"/runtime/rpg-project/" in wasm:
         raise SystemExit("RPG_RUNTIME_RELEASE_GAME_URL_INVALID")
 
     javascript = js_path.read_text(encoding="utf-8")

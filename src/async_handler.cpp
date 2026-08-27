@@ -21,6 +21,7 @@
 
 #ifdef EMSCRIPTEN
 #  include <emscripten.h>
+#  include <emscripten/val.h>
 #  include <lcf/reader_util.h>
 #  include <nlohmann/json.hpp>
    using json = nlohmann::json;
@@ -71,6 +72,17 @@ namespace {
 
 #ifdef EMSCRIPTEN
 	constexpr size_t ASYNC_MAX_RETRY_COUNT{ 16 };
+
+	const std::string& GetRuntimeProjectRoot() {
+		static const std::string root = [] {
+			auto value = emscripten::val::module_property("runtimeProjectRootUrl");
+			if (value.isUndefined() || value.isNull() || value.typeOf().as<std::string>() != "string") {
+				return std::string{};
+			}
+			return value.as<std::string>();
+		}();
+		return root;
+	}
 
 	struct async_download_context {
 		std::string url, file, param;
@@ -317,17 +329,24 @@ void FileRequestAsync::Start() {
 	state = State_Pending;
 
 #ifdef EMSCRIPTEN
-	std::string request_path;
+	std::string request_path = GetRuntimeProjectRoot();
+	const bool explicit_project_root = !request_path.empty();
+	if (explicit_project_root && request_path.back() != '/') {
+		request_path += '/';
+	}
+
+	if (!explicit_project_root) {
 #  ifdef EM_GAME_URL
-	request_path = EM_GAME_URL;
+		request_path = EM_GAME_URL;
 #  else
-	request_path = "games/";
+		request_path = "games/";
 #  endif
 
-	if (!Player::emscripten_game_name.empty()) {
-		request_path += Player::emscripten_game_name + "/";
-	} else {
-		request_path += "default/";
+		if (!Player::emscripten_game_name.empty()) {
+			request_path += Player::emscripten_game_name + "/";
+		} else {
+			request_path += "default/";
+		}
 	}
 
 	std::string modified_path;

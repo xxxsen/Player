@@ -98,45 +98,45 @@ function onPreRun () {
   FS.mkdir("/home/web_user/.config");
   FS.mount(IDBFS, {}, '/home/web_user/.config');
 
-  const retromDependency = 'retrom-filesystem-ready';
-  Module.retromFileSystemReady = false;
-  addRunDependency(retromDependency);
+  const runtimeDependency = 'rpg-runtime-filesystem-ready';
+  Module.runtimeFileSystemReady = false;
+  addRunDependency(runtimeDependency);
   FS.syncfs(true, function(err) {
     if (err) {
-      Module.retromFileSystemError = String(err);
-      abort('retrom filesystem initialization failed');
+      Module.runtimeFileSystemError = String(err);
+      abort('runtime filesystem initialization failed');
     }
     try {
-      for (const entry of Module.retromRestoreFiles || []) {
+      for (const entry of Module.runtimeRestoreFiles || []) {
         const separator = entry.path.lastIndexOf('/');
         if (separator > 0) FS.mkdirTree(entry.path.slice(0, separator));
         FS.writeFile(entry.path, entry.bytes);
       }
-      for (const entry of Module.retromRtpFiles || []) {
+      for (const entry of Module.runtimeRtpFiles || []) {
         const separator = entry.path.lastIndexOf('/');
         if (separator > 0) FS.mkdirTree(entry.path.slice(0, separator));
         FS.writeFile(entry.path, entry.bytes);
       }
     } catch (writeError) {
-      Module.retromFileSystemError = String(writeError);
-      abort('retrom filesystem payload initialization failed');
+      Module.runtimeFileSystemError = String(writeError);
+      abort('runtime filesystem payload initialization failed');
     }
-    Module.retromFileSystemReady = true;
-    removeRunDependency(retromDependency);
+    Module.runtimeFileSystemReady = true;
+    removeRunDependency(runtimeDependency);
   });
 }
 
 Module.setStatus('Downloading...');
 Module.arguments = ["easyrpg-player", ...parseArgs()];
 
-if (Module.retromEngineMode) {
-  Module.arguments.push("--engine", Module.retromEngineMode);
+if (Module.runtimeEngineMode) {
+  Module.arguments.push("--engine", Module.runtimeEngineMode);
 }
-if (Module.retromRtpMountPath) {
-  Module.arguments.push("--rtp-path", Module.retromRtpMountPath);
+if (Module.runtimeRtpMountPath) {
+  Module.arguments.push("--rtp-path", Module.runtimeRtpMountPath);
 }
-if (Module.retromRestoreSlot) {
-  Module.arguments.push("--load-game-id", String(Module.retromRestoreSlot));
+if (Module.runtimeRestoreSlot) {
+  Module.arguments.push("--load-game-id", String(Module.runtimeRestoreSlot));
 }
 
 if (Module.game === undefined) {

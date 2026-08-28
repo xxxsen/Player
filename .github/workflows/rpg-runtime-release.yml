@@ -35,8 +35,14 @@ jobs:
           git fetch --no-tags origin \
             '+refs/heads/retrom/0.8.1.1:refs/remotes/origin/retrom/0.8.1.1'
           git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/0.8.1.1
-          test "$(git rev-parse '0.8.1.1^{commit}')" = \
+          test "$(python3 -c \
+            'import json; print(json.load(open("retrom-fork.json"))["upstreams"][0]["ref"])')" = \
+            0.8.1.1
+          test "$(python3 -c \
+            'import json; print(json.load(open("retrom-fork.json"))["upstreams"][0]["commit"])')" = \
             78328fa29f465315291e161130e6682f69410370
+          git cat-file -e \
+            78328fa29f465315291e161130e6682f69410370'^{commit}'
           git merge-base --is-ancestor \
             78328fa29f465315291e161130e6682f69410370 "$GITHUB_SHA"
           test -z "$(git rev-list --min-parents=2 \

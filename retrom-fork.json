@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "forkRepository": "https://github.com/xxxsen/Player",
-  "defaultBranch": "master",
+  "defaultBranch": "retrom/0.8.1.1",
+  "upstreamMirrorBranch": "master",
   "upstreams": [
     {
       "role": "player",

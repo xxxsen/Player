@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "forkRepository": "https://github.com/xxxsen/Player",
+  "defaultBranch": "master",
+  "upstreams": [
+    {
+      "role": "player",
+      "repository": "https://github.com/EasyRPG/Player",
+      "refType": "TAG",
+      "ref": "0.8.1.1",
+      "commit": "78328fa29f465315291e161130e6682f69410370"
+    }
+  ],
+  "releaseTagPattern": "^rpg-runtime-0\\.8\\.1\\.1-r[1-9][0-9]*(-rc\\.[1-9][0-9]*)?$",
+  "adapterAbi": "easyrpg-save",
+  "releaseAssets": [
+    "easyrpg-player.js",
+    "easyrpg-player.wasm",
+    "rpg-runtime-release.json"
+  ]
+}

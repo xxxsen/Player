@@ -32,6 +32,15 @@ jobs:
           [[ "$GITHUB_REF_NAME" =~ ^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          git fetch --no-tags origin \
+            '+refs/heads/retrom/0.8.1.1:refs/remotes/origin/retrom/0.8.1.1'
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/0.8.1.1
+          test "$(git rev-parse '0.8.1.1^{commit}')" = \
+            78328fa29f465315291e161130e6682f69410370
+          git merge-base --is-ancestor \
+            78328fa29f465315291e161130e6682f69410370 "$GITHUB_SHA"
+          test -z "$(git rev-list --min-parents=2 \
+            78328fa29f465315291e161130e6682f69410370.."$GITHUB_SHA")"
 
       - name: Build WebAssembly assets
         run: |

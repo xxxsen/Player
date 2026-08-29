@@ -45,6 +45,13 @@
 namespace {
 	std::unordered_map<std::string, FileRequestAsync> async_requests;
 	std::unordered_map<std::string, std::string> file_mapping;
+#ifdef EMSCRIPTEN
+	struct runtime_rtp_file {
+		std::string path;
+		std::string url;
+	};
+	std::unordered_map<std::string, runtime_rtp_file> runtime_rtp_mapping;
+#endif
 	int next_id = 0;
 #ifdef EMSCRIPTEN
 	int index_version = 1;
@@ -82,6 +89,43 @@ namespace {
 			return value.as<std::string>();
 		}();
 		return root;
+	}
+
+	void CreateRuntimeRtpMapping() {
+		runtime_rtp_mapping.clear();
+		auto files = emscripten::val::module_property("runtimeRtpRemoteFiles");
+		if (files.isUndefined() || files.isNull()) {
+			return;
+		}
+		if (!emscripten::val::global("Array").call<bool>("isArray", files)) {
+			Output::Error("Emscripten: runtime RTP files must be an array");
+			return;
+		}
+
+		const auto length = files["length"].as<unsigned>();
+		for (unsigned index = 0; index < length; ++index) {
+			auto item = files[index];
+			auto lookup_path = item["lookupPath"];
+			auto path = item["path"];
+			auto url = item["url"];
+			if (lookup_path.isUndefined() || lookup_path.isNull() || lookup_path.typeOf().as<std::string>() != "string" ||
+					path.isUndefined() || path.isNull() || path.typeOf().as<std::string>() != "string" ||
+					url.isUndefined() || url.isNull() || url.typeOf().as<std::string>() != "string") {
+				Output::Error("Emscripten: runtime RTP file entry is invalid");
+				runtime_rtp_mapping.clear();
+				return;
+			}
+			auto normalized = lcf::ReaderUtil::Normalize(lookup_path.as<std::string>());
+			normalized = FileFinder::MakeCanonical(normalized, 1);
+			const bool inserted = runtime_rtp_mapping.emplace(std::move(normalized), runtime_rtp_file{
+				path.as<std::string>(), url.as<std::string>()
+			}).second;
+			if (!inserted) {
+				Output::Error("Emscripten: runtime RTP file entry is duplicated");
+				runtime_rtp_mapping.clear();
+				return;
+			}
+		}
 	}
 
 	struct async_download_context {
@@ -219,6 +263,8 @@ void AsyncHandler::CreateRequestMapping(const std::string& file) {
 			}
 		}
 	}
+
+	CreateRuntimeRtpMapping();
 #else
 	// no-op
 	(void)file;
@@ -374,10 +420,18 @@ void FileRequestAsync::Start() {
 	}
 
 	auto it = file_mapping.find(modified_path);
+	bool runtime_rtp_request = false;
+	std::string request_file = path;
 	if (it != file_mapping.end()) {
 		request_path += it->second;
+		request_file = it->second;
 	} else {
-		if (file_mapping.empty()) {
+		auto rtp_it = runtime_rtp_mapping.find(modified_path);
+		if (rtp_it != runtime_rtp_mapping.end()) {
+			request_path = rtp_it->second.url;
+			request_file = rtp_it->second.path;
+			runtime_rtp_request = true;
+		} else if (file_mapping.empty()) {
 			// index.json not fetched yet, fallthrough and fetch
 			request_path += path;
 		} else {
@@ -388,12 +442,14 @@ void FileRequestAsync::Start() {
 		}
 	}
 
-	// URL encode %, # and +
-	request_path = Utils::ReplaceAll(request_path, "%", "%25");
-	request_path = Utils::ReplaceAll(request_path, "#", "%23");
-	request_path = Utils::ReplaceAll(request_path, "+", "%2B");
+	if (!runtime_rtp_request) {
+		// URL encode %, # and + in project-relative paths. Runtime RTP URLs are
+		// complete host-provided URLs and are already encoded.
+		request_path = Utils::ReplaceAll(request_path, "%", "%25");
+		request_path = Utils::ReplaceAll(request_path, "#", "%23");
+		request_path = Utils::ReplaceAll(request_path, "+", "%2B");
+	}
 
-	auto request_file = (it != file_mapping.end() ? it->second : path);
 	async_wget_with_retry(request_path, std::move(request_file), "", this);
 #else
 #  ifdef EM_GAME_URL

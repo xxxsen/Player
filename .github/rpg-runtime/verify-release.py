@@ -50,7 +50,7 @@ def main() -> int:
         "rpg-runtime-filesystem-ready",
         "runtimeRestoreFiles",
         "runtimeRestoreSlot",
-        "runtimeRtpFiles",
+        "runtimeRtpRemoteFiles",
         "runtimeEngineMode",
         "typeof event.error?.message",
     )

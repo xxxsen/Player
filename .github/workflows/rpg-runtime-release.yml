@@ -1,6 +1,7 @@
 name: RPG Runtime Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "rpg-runtime-0.8.1.1-r*"
@@ -29,12 +30,17 @@ jobs:
       - name: Validate release identity
         run: |
           set -euo pipefail
-          [[ "$GITHUB_REF_NAME" =~ ^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$ ]]
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
           git fetch --no-tags origin \
             '+refs/heads/retrom/0.8.1.1:refs/remotes/origin/retrom/0.8.1.1'
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/0.8.1.1
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            [[ "$GITHUB_REF_NAME" =~ ^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$ ]]
+            test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+            git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/0.8.1.1
+          else
+            [[ "$GITHUB_REF_NAME" =~ ^(feat|fix|build)/[a-z0-9][a-z0-9-]*$ ]]
+            git merge-base --is-ancestor origin/retrom/0.8.1.1 "$GITHUB_SHA"
+          fi
           test "$(python3 -c \
             'import json; print(json.load(open("retrom-fork.json"))["upstreams"][0]["ref"])')" = \
             0.8.1.1
@@ -67,13 +73,18 @@ jobs:
       - name: Validate and describe assets
         run: |
           set -euo pipefail
+          identity_tag="$GITHUB_REF_NAME"
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            identity_tag=rpg-runtime-0.8.1.1-r999999
+          fi
           python3 .github/rpg-runtime/verify-release.py \
             --output "$RUNNER_TEMP/rpg-runtime-output" \
             --repository "https://github.com/$GITHUB_REPOSITORY" \
-            --tag "$GITHUB_REF_NAME" \
+            --tag "$identity_tag" \
             --commit "$GITHUB_SHA"
 
       - name: Create immutable-tag release
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -86,3 +97,15 @@ jobs:
             "$RUNNER_TEMP/rpg-runtime-output/easyrpg-player.js" \
             "$RUNNER_TEMP/rpg-runtime-output/easyrpg-player.wasm" \
             "$RUNNER_TEMP/rpg-runtime-output/rpg-runtime-release.json"
+
+      - name: Upload branch integration candidate
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpg-runtime-easyrpg-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/rpg-runtime-output/easyrpg-player.js
+            ${{ runner.temp }}/rpg-runtime-output/easyrpg-player.wasm
+            ${{ runner.temp }}/rpg-runtime-output/rpg-runtime-release.json
+          if-no-files-found: error
+          retention-days: 7

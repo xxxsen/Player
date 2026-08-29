@@ -112,11 +112,6 @@ function onPreRun () {
         if (separator > 0) FS.mkdirTree(entry.path.slice(0, separator));
         FS.writeFile(entry.path, entry.bytes);
       }
-      for (const entry of Module.runtimeRtpFiles || []) {
-        const separator = entry.path.lastIndexOf('/');
-        if (separator > 0) FS.mkdirTree(entry.path.slice(0, separator));
-        FS.writeFile(entry.path, entry.bytes);
-      }
     } catch (writeError) {
       Module.runtimeFileSystemError = String(writeError);
       abort('runtime filesystem payload initialization failed');
@@ -131,9 +126,6 @@ Module.arguments = ["easyrpg-player", ...parseArgs()];
 
 if (Module.runtimeEngineMode) {
   Module.arguments.push("--engine", Module.runtimeEngineMode);
-}
-if (Module.runtimeRtpMountPath) {
-  Module.arguments.push("--rtp-path", Module.runtimeRtpMountPath);
 }
 if (Module.runtimeRestoreSlot) {
   Module.arguments.push("--load-game-id", String(Module.runtimeRestoreSlot));

@@ -12,6 +12,14 @@ from pathlib import Path
 
 TAG = re.compile(r"^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
+WASM_BRIDGE_MARKERS = (b"runtimeProjectRootUrl", b"runtimeRtpRemoteFiles")
+JAVASCRIPT_BRIDGE_MARKERS = (
+    "rpg-runtime-filesystem-ready",
+    "runtimeRestoreFiles",
+    "runtimeRestoreSlot",
+    "runtimeEngineMode",
+    "typeof event.error?.message",
+)
 
 
 def digest(path: Path) -> str:
@@ -42,19 +50,11 @@ def main() -> int:
     wasm = wasm_path.read_bytes()
     if wasm[:8] != b"\x00asm\x01\x00\x00\x00":
         raise SystemExit("RPG_RUNTIME_RELEASE_WASM_INVALID")
-    if b"runtimeProjectRootUrl" not in wasm or b"/runtime/rpg-project/" in wasm:
+    if any(marker not in wasm for marker in WASM_BRIDGE_MARKERS) or b"/runtime/rpg-project/" in wasm:
         raise SystemExit("RPG_RUNTIME_RELEASE_GAME_URL_INVALID")
 
     javascript = js_path.read_text(encoding="utf-8")
-    required_markers = (
-        "rpg-runtime-filesystem-ready",
-        "runtimeRestoreFiles",
-        "runtimeRestoreSlot",
-        "runtimeRtpFiles",
-        "runtimeEngineMode",
-        "typeof event.error?.message",
-    )
-    if any(marker not in javascript for marker in required_markers):
+    if any(marker not in javascript for marker in JAVASCRIPT_BRIDGE_MARKERS):
         raise SystemExit("RPG_RUNTIME_RELEASE_BRIDGE_INVALID")
 
     assets = []

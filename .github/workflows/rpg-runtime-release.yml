@@ -54,6 +54,9 @@ jobs:
           test -z "$(git rev-list --min-parents=2 \
             78328fa29f465315291e161130e6682f69410370.."$GITHUB_SHA")"
 
+      - name: Test release verifier
+        run: python3 .github/rpg-runtime/test_verify_release.py
+
       - name: Build WebAssembly assets
         run: |
           set -euo pipefail

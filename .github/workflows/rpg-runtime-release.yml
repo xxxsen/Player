@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - "rpg-runtime-0.8.1.1-r*"
+      - "retrom-core-0.8.1.1-r*"
 
 permissions:
   contents: write
@@ -34,7 +34,7 @@ jobs:
           git fetch --no-tags origin \
             '+refs/heads/retrom/0.8.1.1:refs/remotes/origin/retrom/0.8.1.1'
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            [[ "$GITHUB_REF_NAME" =~ ^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$ ]]
+            [[ "$GITHUB_REF_NAME" =~ ^retrom-core-0\.8\.1\.1-r[1-9][0-9]*$ ]]
             test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
             git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/0.8.1.1
           else
@@ -78,7 +78,7 @@ jobs:
           set -euo pipefail
           identity_tag="$GITHUB_REF_NAME"
           if [[ "$GITHUB_REF" != refs/tags/* ]]; then
-            identity_tag=rpg-runtime-0.8.1.1-r999999
+            identity_tag=retrom-core-0.8.1.1-r999999
           fi
           python3 .github/rpg-runtime/verify-release.py \
             --output "$RUNNER_TEMP/rpg-runtime-output" \

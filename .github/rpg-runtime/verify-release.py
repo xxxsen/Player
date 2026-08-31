@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 
-TAG = re.compile(r"^rpg-runtime-0\.8\.1\.1-r[1-9][0-9]*$")
+TAG = re.compile(r"^retrom-core-0\.8\.1\.1-r[1-9][0-9]*$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 WASM_BRIDGE_MARKERS = (b"runtimeProjectRootUrl", b"runtimeRtpRemoteFiles")
 JAVASCRIPT_BRIDGE_MARKERS = (

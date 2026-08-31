@@ -1,6 +1,6 @@
 # RPG runtime EasyRPG Web release
 
-Tags matching `rpg-runtime-0.8.1.1-rN` build the tagged Player source with
+Tags matching `retrom-core-0.8.1.1-rN` build the tagged Player source with
 Emscripten 3.1.74 and publish these GitHub Release assets:
 
 - `easyrpg-player.js`

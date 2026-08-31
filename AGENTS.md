@@ -1,6 +1,6 @@
 # Retrom Player fork maintenance rules
 
-This fork builds the EasyRPG browser core consumed by `xxxsen/retrom-runtime`.
+This fork builds the EasyRPG browser core consumed by `retrom-project/retrom-runtime`.
 It must remain independent of any Retrom host application API, database, review
 workflow, credentials, or private game content.
 
@@ -33,7 +33,7 @@ workflow, credentials, or private game content.
 
 ## Releases
 
-- Release tags have the form `rpg-runtime-0.8.1.1-rN`, with optional
+- Release tags have the form `retrom-core-0.8.1.1-rN`, with optional
   `-rc.N` only for integration candidates.
 - `rN` increases for any source, build, asset, or adapter-contract change while
   the upstream baseline remains `0.8.1.1`. A new upstream baseline restarts at
@@ -43,6 +43,8 @@ workflow, credentials, or private game content.
   recorded in `retrom-fork.json` as its unmodified ancestry baseline.
 - Tags and published assets are immutable: never move a tag, overwrite an
   asset, or create aliases such as `latest`, `stable`, or `current`.
+- Existing `rpg-runtime-*` tags are immutable historical records. Never create
+  another tag in that retired namespace.
 - The tag workflow is the only supported way to build and upload release
   assets. Observed hashes diagnose local/cache corruption; repository, tag,
   tag commit, asset filename, and adapter ABI define release identity.

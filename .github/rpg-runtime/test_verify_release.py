@@ -36,6 +36,21 @@ class ReleaseMarkerTests(unittest.TestCase):
         self.assertIn("runtimeRestoreFiles", VERIFY.JAVASCRIPT_BRIDGE_MARKERS)
         self.assertNotIn(b"runtimeRestoreFiles", VERIFY.WASM_BRIDGE_MARKERS)
 
+    def test_remote_download_creates_the_destination_parent_before_wget(self) -> None:
+        source = (ROOT / "src/async_handler.cpp").read_text(encoding="utf-8")
+        self.assertIn("FS.mkdirTree(UTF8ToString($0))", source)
+        ensure = source.index("ensure_parent_directory(file);")
+        download = source.index("start_async_wget_with_retry(ctx);", ensure)
+        self.assertLess(ensure, download)
+
+    def test_candidate_build_returns_container_outputs_to_the_calling_user(self) -> None:
+        wrapper = (ROOT / ".github/rpg-runtime/build-candidate.sh").read_text(encoding="utf-8")
+        builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")
+        self.assertIn('RETROM_HOST_UID="$(id -u)"', wrapper)
+        self.assertIn('RETROM_HOST_GID="$(id -g)"', wrapper)
+        self.assertIn('--env RETROM_HOST_UID --env RETROM_HOST_GID', wrapper)
+        self.assertIn('chown -R -- "$RETROM_HOST_UID:$RETROM_HOST_GID"', builder)
+
 
 if __name__ == "__main__":
     unittest.main()

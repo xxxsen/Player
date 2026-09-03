@@ -181,12 +181,24 @@ namespace {
 		);
 	}
 
+	void ensure_parent_directory(const std::string& file) {
+		const auto separator = file.find_last_of('/');
+		if (separator == std::string::npos || separator == 0) {
+			return;
+		}
+		const auto directory = file.substr(0, separator);
+		EM_ASM({
+			FS.mkdirTree(UTF8ToString($0));
+		}, directory.c_str());
+	}
+
 	void async_wget_with_retry(
 		std::string url,
 		std::string file,
 		std::string param,
 		FileRequestAsync* obj
 	) {
+		ensure_parent_directory(file);
 		// ctx will be deleted when download succeeds
 		auto ctx = new async_download_context{ url, file, param, obj };
 		start_async_wget_with_retry(ctx);

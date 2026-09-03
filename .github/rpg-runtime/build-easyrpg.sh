@@ -10,6 +10,15 @@ readonly BUILDSCRIPTS="$WORK_ROOT/buildscripts"
 readonly PREFIX="$WORK_ROOT/easyrpg-prefix"
 readonly PLAYER_BUILD="$WORK_ROOT/player-build"
 
+if [[ ! "${RETROM_HOST_UID:-}" =~ ^[0-9]+$ || ! "${RETROM_HOST_GID:-}" =~ ^[0-9]+$ ]]; then
+  echo "calling user identity is required" >&2
+  exit 2
+fi
+return_ownership() {
+  chown -R -- "$RETROM_HOST_UID:$RETROM_HOST_GID" "$WORK_ROOT" "$OUTPUT_ROOT"
+}
+trap return_ownership EXIT
+
 export DEBIAN_FRONTEND=noninteractive
 export LANG=C
 export LC_ALL=C

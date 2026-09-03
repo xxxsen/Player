@@ -1,0 +1,85 @@
+diff --git a/shared/common.sh b/shared/common.sh
+index 914430f..b265197 100644
+--- a/shared/common.sh
++++ b/shared/common.sh
+@@ -12,6 +12,24 @@ function extract {
+ 	fi
+ }
+ 
++function verify_download {
++	archive=$1
++	name=$2
++
++	case "$name" in
++		*.tar.gz|*.tgz) gzip -t -- "$archive" ;;
++		*.tar.bz2) bzip2 -t -- "$archive" ;;
++		*.tar.xz) xz -t -- "$archive" ;;
++		*.zip) unzip -tqq "$archive" >/dev/null ;;
++		*) test -s "$archive" ;;
++	esac
++}
++
++function download_archive {
++	source_url=$1
++	target=$2
++	shift 2
++	curl --fail --silent --show-error --location --retry 5 --retry-delay 1 \
++		--retry-all-errors "$@" --output "$target" "$source_url"
++}
++
+ function download {
+ 	url=$1
+ 	shift
+@@ -19,23 +37,40 @@ function download {
+ 	[ $# -ne 0 ] && msg "Downloading $url..."
+ 
+ 	file=${url##*/}
++	temp="$file.part"
++	rm -f -- "$temp"
+ 
+ 	# Try cache folder first
+ 	if [ "x$EASYRPG_PATH_DOWNLOADCACHE" != "x" ]; then
+ 		if [ -e $EASYRPG_PATH_DOWNLOADCACHE/$file ]; then
+-			cp $EASYRPG_PATH_DOWNLOADCACHE/$file $file
+-			echo "[copied from cache]"
+-			return
++			cp "$EASYRPG_PATH_DOWNLOADCACHE/$file" "$temp"
++			if verify_download "$temp" "$file"; then
++				mv -- "$temp" "$file"
++				echo "[copied from cache]"
++				return
++			fi
++			echo "Ignoring invalid cached archive: $file" >&2
++			rm -f -- "$temp"
+ 		fi
+ 	fi
+ 
+ 	# Fallback to easyrpg.org when <100KB/s for >3s
+-	if [ "x$USE_EASYRPG_MIRROR" == "x1" ] || \
+-		! curl --fail -sSLOR -y3 -Y102400 --connect-timeout 3 $url; then
+-		curl -sSLOR https://easyrpg.org/downloads/sources/$file
++	if [ "x$USE_EASYRPG_MIRROR" != "x1" ]; then
++		if download_archive "$url" "$temp" --speed-time 3 --speed-limit 102400 \
++				--connect-timeout 3 && verify_download "$temp" "$file"; then
++			mv -- "$temp" "$file"
++			echo "done."
++			return
++		fi
++		echo "Primary archive download failed validation: $file" >&2
++		rm -f -- "$temp"
+ 	fi
+-	[ $? -eq 0 ] && echo "done."
++
++	if download_archive "https://easyrpg.org/downloads/sources/$file" "$temp" && \
++			verify_download "$temp" "$file"; then
++		mv -- "$temp" "$file"
++		echo "done."
++		return
++	fi
++
++	rm -f -- "$temp"
++	echo "Archive download failed validation: $file" >&2
++	return 1
+ }
+ 
+ function download_and_extract {

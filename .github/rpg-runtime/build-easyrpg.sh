@@ -38,6 +38,7 @@ git config --global --add safe.directory "$PLAYER_SOURCE"
 git clone https://github.com/EasyRPG/buildscripts.git "$BUILDSCRIPTS"
 git -C "$BUILDSCRIPTS" checkout --detach "$BUILDSCRIPTS_COMMIT"
 patch -d "$BUILDSCRIPTS" -p1 < /recipe/easyrpg-fixed-parallel.patch
+patch -d "$BUILDSCRIPTS" -p1 < /recipe/easyrpg-download-integrity.patch
 
 mkdir -p "$PREFIX" "$OUTPUT_ROOT"
 cd "$PREFIX"

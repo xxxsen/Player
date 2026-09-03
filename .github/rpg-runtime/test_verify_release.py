@@ -70,6 +70,18 @@ class ReleaseMarkerTests(unittest.TestCase):
         self.assertIn('--env RETROM_HOST_UID --env RETROM_HOST_GID', wrapper)
         self.assertIn('chown -R -- "$RETROM_HOST_UID:$RETROM_HOST_GID"', builder)
 
+    def test_candidate_build_retries_and_validates_dependency_archives(self) -> None:
+        builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")
+        patch = (ROOT / ".github/rpg-runtime/easyrpg-download-integrity.patch").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("easyrpg-download-integrity.patch", builder)
+        self.assertIn("verify_download", patch)
+        self.assertIn("--retry-all-errors", patch)
+        self.assertIn("$file.part", patch)
+        self.assertIn("bzip2 -t", patch)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <unordered_set>
 
 #ifdef EMSCRIPTEN
 #  include <emscripten.h>
@@ -181,18 +182,42 @@ namespace {
 		);
 	}
 
-	void ensure_parent_directory(const std::string& file) {
+	std::string parent_directory(const std::string& file) {
 		const auto separator = file.find_last_of('/');
 		if (separator == std::string::npos || separator == 0) {
-			return;
+			return {};
 		}
 		const auto directory = file.substr(0, separator);
 		if (directory.empty() || directory == ".") {
+			return {};
+		}
+		return directory;
+	}
+
+	void ensure_directory(const std::string& directory) {
+		if (directory.empty()) {
 			return;
 		}
 		EM_ASM({
 			FS.mkdirTree(UTF8ToString($0));
 		}, directory.c_str());
+	}
+
+	void ensure_parent_directory(const std::string& file) {
+		ensure_directory(parent_directory(file));
+	}
+
+	void ensure_parent_directories(const std::unordered_map<std::string, std::string>& files) {
+		std::unordered_set<std::string> directories;
+		for (const auto& item: files) {
+			auto directory = parent_directory(item.second);
+			if (!directory.empty()) {
+				directories.emplace(std::move(directory));
+			}
+		}
+		for (const auto& directory: directories) {
+			ensure_directory(directory);
+		}
 	}
 
 	void async_wget_with_retry(
@@ -279,6 +304,7 @@ void AsyncHandler::CreateRequestMapping(const std::string& file) {
 		}
 	}
 
+	ensure_parent_directories(file_mapping);
 	CreateRuntimeRtpMapping();
 #else
 	// no-op

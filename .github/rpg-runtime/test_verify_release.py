@@ -49,6 +49,13 @@ class ReleaseMarkerTests(unittest.TestCase):
         create = source.index("FS.mkdirTree(UTF8ToString($0))", guard)
         self.assertLess(guard, create)
 
+    def test_remote_index_materializes_the_declared_directory_tree_before_gameplay(self) -> None:
+        source = (ROOT / "src/async_handler.cpp").read_text(encoding="utf-8")
+        materialize = source.index("ensure_parent_directories(file_mapping);")
+        rtp_mapping = source.index("CreateRuntimeRtpMapping();", materialize)
+        self.assertLess(materialize, rtp_mapping)
+        self.assertIn("std::unordered_set<std::string> directories;", source)
+
     def test_candidate_build_returns_container_outputs_to_the_calling_user(self) -> None:
         wrapper = (ROOT / ".github/rpg-runtime/build-candidate.sh").read_text(encoding="utf-8")
         builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")

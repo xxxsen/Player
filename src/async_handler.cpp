@@ -187,6 +187,9 @@ namespace {
 			return;
 		}
 		const auto directory = file.substr(0, separator);
+		if (directory.empty() || directory == ".") {
+			return;
+		}
 		EM_ASM({
 			FS.mkdirTree(UTF8ToString($0));
 		}, directory.c_str());

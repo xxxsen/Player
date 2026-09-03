@@ -43,6 +43,12 @@ class ReleaseMarkerTests(unittest.TestCase):
         download = source.index("start_async_wget_with_retry(ctx);", ensure)
         self.assertLess(ensure, download)
 
+    def test_remote_download_does_not_create_the_current_directory(self) -> None:
+        source = (ROOT / "src/async_handler.cpp").read_text(encoding="utf-8")
+        guard = source.index('directory == "."')
+        create = source.index("FS.mkdirTree(UTF8ToString($0))", guard)
+        self.assertLess(guard, create)
+
     def test_candidate_build_returns_container_outputs_to_the_calling_user(self) -> None:
         wrapper = (ROOT / ".github/rpg-runtime/build-candidate.sh").read_text(encoding="utf-8")
         builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")

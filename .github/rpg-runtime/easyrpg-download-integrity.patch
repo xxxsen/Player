@@ -2,7 +2,7 @@ diff --git a/shared/common.sh b/shared/common.sh
 index 914430f..b265197 100644
 --- a/shared/common.sh
 +++ b/shared/common.sh
-@@ -12,6 +12,24 @@ function extract {
+@@ -12,6 +12,27 @@ function extract {
  	fi
  }
  
@@ -30,7 +30,7 @@ index 914430f..b265197 100644
  function download {
  	url=$1
  	shift
-@@ -19,23 +37,40 @@ function download {
+@@ -19,22 +40,45 @@ function download {
  	[ $# -ne 0 ] && msg "Downloading $url..."
  
  	file=${url##*/}

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -81,6 +82,13 @@ class ReleaseMarkerTests(unittest.TestCase):
         self.assertIn("--retry-all-errors", patch)
         self.assertIn("$file.part", patch)
         self.assertIn("bzip2 -t", patch)
+        parsed = subprocess.run(
+            ["git", "apply", "--stat", str(ROOT / ".github/rpg-runtime/easyrpg-download-integrity.patch")],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        self.assertEqual(0, parsed.returncode, parsed.stderr)
 
 
 if __name__ == "__main__":

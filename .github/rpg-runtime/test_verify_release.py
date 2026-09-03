@@ -56,6 +56,12 @@ class ReleaseMarkerTests(unittest.TestCase):
         self.assertLess(materialize, rtp_mapping)
         self.assertIn("std::unordered_set<std::string> directories;", source)
 
+    def test_emscripten_reports_a_real_player_exit_before_cancelling_the_main_loop(self) -> None:
+        source = (ROOT / "src/platform/emscripten/main.cpp").read_text(encoding="utf-8")
+        signal = source.index("Module.onRuntimeExitRequested")
+        cancel = source.index("emscripten_cancel_main_loop();", signal)
+        self.assertLess(signal, cancel)
+
     def test_candidate_build_returns_container_outputs_to_the_calling_user(self) -> None:
         wrapper = (ROOT / ".github/rpg-runtime/build-candidate.sh").read_text(encoding="utf-8")
         builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")

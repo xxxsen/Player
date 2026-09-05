@@ -63,9 +63,12 @@ jobs:
           output="$RUNNER_TEMP/rpg-runtime-output"
           work="$RUNNER_TEMP/rpg-runtime-work"
           mkdir -p "$output" "$work"
+          export RETROM_HOST_UID="$(id -u)"
+          export RETROM_HOST_GID="$(id -g)"
           docker run --rm \
             --platform linux/amd64 \
             --hostname rpg-runtime-easyrpg \
+            --env RETROM_HOST_UID --env RETROM_HOST_GID \
             -v "$GITHUB_WORKSPACE:/source:ro" \
             -v "$GITHUB_WORKSPACE/.github/rpg-runtime:/recipe:ro" \
             -v "$work:/work" \

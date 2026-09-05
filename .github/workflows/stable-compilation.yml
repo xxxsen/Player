@@ -51,6 +51,12 @@ jobs:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
+          # The CDN returns 404 for Bullseye security packages still available
+          # from Debian's official security origin. Keep the legacy compiler
+          # matrix and APT signature validation; only correct that source host.
+          if [[ "${{ matrix.image }}" == debian:11 ]]; then
+            sed -i 's@deb.debian.org/debian-security@security.debian.org/debian-security@g' /etc/apt/sources.list
+          fi
           apt-get update
           apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build git \

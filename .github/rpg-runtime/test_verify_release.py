@@ -20,6 +20,14 @@ SPEC.loader.exec_module(VERIFY)
 
 
 class ReleaseMarkerTests(unittest.TestCase):
+    def test_debian11_ci_uses_the_available_official_security_origin(self) -> None:
+        workflow = (ROOT / ".github/workflows/stable-compilation.yml").read_text()
+        self.assertIn("- debian:11", workflow)
+        self.assertIn("security.debian.org/debian-security", workflow)
+        self.assertLess(workflow.index("security.debian.org/debian-security"), workflow.index("apt-get update"))
+        self.assertNotIn("trusted=yes", workflow)
+        self.assertNotIn("AllowUnauthenticated", workflow)
+
     def test_runtime_status_has_no_host_fixture_or_review_protocol(self) -> None:
         source = (ROOT / "src/platform/emscripten/interface.cpp").read_text(encoding="utf-8")
         status = source.split("std::string Emscripten_Interface::RuntimeState() {", 1)[1].split(

@@ -93,6 +93,13 @@ class ReleaseMarkerTests(unittest.TestCase):
         self.assertIn('--env RETROM_HOST_UID --env RETROM_HOST_GID', wrapper)
         self.assertIn('chown -R -- "$RETROM_HOST_UID:$RETROM_HOST_GID"', builder)
 
+    def test_release_build_supplies_the_same_required_calling_user_identity(self) -> None:
+        workflow = (ROOT / ".github/workflows/rpg-runtime-release.yml").read_text()
+        self.assertIn('export RETROM_HOST_UID="$(id -u)"', workflow)
+        self.assertIn('export RETROM_HOST_GID="$(id -g)"', workflow)
+        self.assertIn('--env RETROM_HOST_UID --env RETROM_HOST_GID', workflow)
+        self.assertLess(workflow.index('export RETROM_HOST_UID='), workflow.index('docker run --rm'))
+
     def test_candidate_build_retries_and_validates_dependency_archives(self) -> None:
         builder = (ROOT / ".github/rpg-runtime/build-easyrpg.sh").read_text(encoding="utf-8")
         patch = (ROOT / ".github/rpg-runtime/easyrpg-download-integrity.patch").read_text(

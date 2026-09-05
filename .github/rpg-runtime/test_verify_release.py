@@ -20,11 +20,15 @@ SPEC.loader.exec_module(VERIFY)
 
 
 class ReleaseMarkerTests(unittest.TestCase):
-    def test_debian11_ci_uses_the_available_official_security_origin(self) -> None:
+    def test_debian11_ci_pins_signed_pre_retirement_package_snapshots(self) -> None:
         workflow = (ROOT / ".github/workflows/stable-compilation.yml").read_text()
         self.assertIn("- debian:11", workflow)
-        self.assertIn("security.debian.org/debian-security", workflow)
-        self.assertLess(workflow.index("security.debian.org/debian-security"), workflow.index("apt-get update"))
+        for archive in ("debian", "debian-security"):
+            source = f"snapshot.debian.org/archive/{archive}/20260830T000000Z"
+            self.assertIn(source, workflow)
+            self.assertLess(workflow.index(source), workflow.index("apt-get update"))
+        self.assertIn("[check-valid-until=no]", workflow)
+        self.assertNotIn("Acquire::Check-Valid-Until", workflow)
         self.assertNotIn("trusted=yes", workflow)
         self.assertNotIn("AllowUnauthenticated", workflow)
 

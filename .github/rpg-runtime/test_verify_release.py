@@ -20,6 +20,16 @@ SPEC.loader.exec_module(VERIFY)
 
 
 class ReleaseMarkerTests(unittest.TestCase):
+    def test_runtime_status_has_no_host_fixture_or_review_protocol(self) -> None:
+        source = (ROOT / "src/platform/emscripten/interface.cpp").read_text(encoding="utf-8")
+        status = source.split("std::string Emscripten_Interface::RuntimeState() {", 1)[1].split(
+            "\n}\n", 1
+        )[0]
+        for removed in ("fixture_state", "fixtureState", "GetMapId", "GetX", "GetY", "game_variables"):
+            self.assertNotIn(removed, status)
+        for retained in ("Scene::Map", "Player::IsRPG2k3()", "CanCreateRuntimeCheckpoint()", "Player::GetFrames()"):
+            self.assertIn(retained, status)
+
     def test_release_identity_uses_the_organization_and_core_tag_namespace(self) -> None:
         contract = json.loads((ROOT / "retrom-fork.json").read_text(encoding="utf-8"))
         workflow = (ROOT / ".github/workflows/rpg-runtime-release.yml").read_text(encoding="utf-8")

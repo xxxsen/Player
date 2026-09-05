@@ -10,6 +10,15 @@ readonly BUILDSCRIPTS="$WORK_ROOT/buildscripts"
 readonly PREFIX="$WORK_ROOT/easyrpg-prefix"
 readonly PLAYER_BUILD="$WORK_ROOT/player-build"
 
+if [[ ! "${RETROM_HOST_UID:-}" =~ ^[0-9]+$ || ! "${RETROM_HOST_GID:-}" =~ ^[0-9]+$ ]]; then
+  echo "calling user identity is required" >&2
+  exit 2
+fi
+return_ownership() {
+  chown -R -- "$RETROM_HOST_UID:$RETROM_HOST_GID" "$WORK_ROOT" "$OUTPUT_ROOT"
+}
+trap return_ownership EXIT
+
 export DEBIAN_FRONTEND=noninteractive
 export LANG=C
 export LC_ALL=C
@@ -29,6 +38,7 @@ git config --global --add safe.directory "$PLAYER_SOURCE"
 git clone https://github.com/EasyRPG/buildscripts.git "$BUILDSCRIPTS"
 git -C "$BUILDSCRIPTS" checkout --detach "$BUILDSCRIPTS_COMMIT"
 patch -d "$BUILDSCRIPTS" -p1 < /recipe/easyrpg-fixed-parallel.patch
+patch -d "$BUILDSCRIPTS" -p1 < /recipe/easyrpg-download-integrity.patch
 
 mkdir -p "$PREFIX" "$OUTPUT_ROOT"
 cd "$PREFIX"

@@ -17,6 +17,10 @@ as the project `index.json`. Project files always win; a missing project
 resource is fetched from the matching RTP URL only when the game actually asks
 for it. RTP archives are therefore not downloaded or unpacked before the first
 frame.
+The runtime status reports only the actual engine, map readiness, checkpoint
+availability and frame count. It has no host review or fixture-state protocol;
+development tests can inspect an ordinary saved LCF file for map and variable
+assertions without changing the core's public status.
 The JSON digest values describe the uploaded bytes for cache diagnostics; they
 are not the remote admission identity. Consumers identify this runtime by the
 repository, tag, tag commit, asset filenames and `easyrpg-save-v1` adapter ABI.

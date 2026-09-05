@@ -5,7 +5,11 @@ output=${1:?absolute empty output directory is required}
 python3 "$root/.github/rpg-runtime/candidate_descriptor.py" prepare "$output"
 work=$(mktemp -d "${TMPDIR:-/tmp}/retrom-easyrpg-candidate.XXXXXX")
 trap 'rm -rf "$work"' EXIT INT TERM
+RETROM_HOST_UID="$(id -u)"
+RETROM_HOST_GID="$(id -g)"
+export RETROM_HOST_UID RETROM_HOST_GID
 docker run --rm --platform linux/amd64 --hostname rpg-runtime-easyrpg \
+  --env RETROM_HOST_UID --env RETROM_HOST_GID \
   --volume "$root:/source:ro" --volume "$root/.github/rpg-runtime:/recipe:ro" \
   --volume "$work:/work" --volume "$output:/output" \
   emscripten/emsdk@sha256:af45409f3199d88db4b1b03af0098532c8fb33a375ac257463eeb0a622870d06 \

@@ -76,6 +76,12 @@ void main_loop() {
 			counter = 6;
 			return;
 		}
+		EM_ASM({
+			const callback = Module.onRuntimeExitRequested;
+			if (typeof callback === "function") {
+				callback();
+			}
+		});
 		emscripten_cancel_main_loop();
 	}
 }

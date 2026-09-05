@@ -127,21 +127,13 @@ bool Emscripten_Interface::RestoreRuntimeCheckpoint() {
 
 std::string Emscripten_Interface::RuntimeState() {
 	const bool ready = Scene::instance && Scene::instance->type == Scene::Map &&
-		Main_Data::game_player && Main_Data::game_variables;
+		Main_Data::game_player;
 	const char* engine = Player::IsRPG2k3() ? "RPG2003" : "RPG2000";
-	const int map_id = ready ? Main_Data::game_player->GetMapId() : 0;
-	const int x = ready ? Main_Data::game_player->GetX() : 0;
-	const int y = ready ? Main_Data::game_player->GetY() : 0;
-	const int fixture_state = ready ? Main_Data::game_variables->Get(1) : 0;
 	std::ostringstream json;
 	json << "{\"engine\":\"" << engine
 			 << "\",\"ready\":" << (ready ? "true" : "false")
 			 << ",\"canCheckpoint\":" << (CanCreateRuntimeCheckpoint() ? "true" : "false")
-			 << ",\"frameCount\":" << Player::GetFrames()
-			 << ",\"mapId\":" << map_id
-			 << ",\"playerX\":" << x
-			 << ",\"playerY\":" << y
-			 << ",\"fixtureState\":" << fixture_state << "}";
+			 << ",\"frameCount\":" << Player::GetFrames() << "}";
 	return json.str();
 }
 

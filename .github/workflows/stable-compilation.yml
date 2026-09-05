@@ -51,6 +51,18 @@ jobs:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
+          # Preserve the legacy compiler matrix after Bullseye LTS retirement.
+          # Live indexes reference removed packages, including at the security
+          # origin. Pin Debian's last pre-retirement snapshot instead. Only its
+          # historical expiry is ignored; APT still verifies signatures/hashes.
+          # https://snapshot.debian.org/#usage
+          if [[ "${{ matrix.image }}" == debian:11 ]]; then
+            sed -i \
+              -e 's@deb.debian.org/debian-security@[check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260830T000000Z@' \
+              -e 's@deb.debian.org/debian@[check-valid-until=no] http://snapshot.debian.org/archive/debian/20260830T000000Z@' \
+              -e 's@http://\[check-valid-until=no\]@[check-valid-until=no]@' \
+              /etc/apt/sources.list
+          fi
           apt-get update
           apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build git \
